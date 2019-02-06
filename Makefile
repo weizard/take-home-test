@@ -5,4 +5,4 @@ all:
 	go build -o ./bin/client ./test/client/main.go
 	go build -o ./bin/external ./test/external/main.go
 clean:
-	rm ./bin/server ./bin/client ./bin/external
+	rm ./bin/*

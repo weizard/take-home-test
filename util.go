@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"sync"
 	"time"
 )
@@ -33,4 +35,17 @@ func (pRate *rateState) getRate() float64 {
 	t = pRate.rps
 	pRate.mu.RUnlock()
 	return t
+}
+
+var f *os.File
+
+func errorLog(title string, content string) {
+	logFileName := "log"
+	var err error
+	if f == nil {
+		if f, err = os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err != nil {
+			fmt.Printf("[errorLog] %s\n", err.Error())
+		}
+	}
+	f.WriteString(time.Now().Format("2006-01-02 03:04:05 -0700") + " - [" + title + "] " + content + "\n")
 }

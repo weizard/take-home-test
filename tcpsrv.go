@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,13 +28,16 @@ var (
 )
 
 func init() {
+	// init limit
 	for i := 0; i < 1; i++ {
 		limit <- time.Now()
 	}
+	// Watcher for rps of quering external API
 	queryRateWatcher = rateState{
 		lastFlush: time.Now(),
 		period:    1 * time.Second,
 	}
+	// control rps
 	go func() {
 		for t := range time.Tick(time.Duration(1000/float64(RequestRate)) * time.Millisecond) {
 			if len(limit) == 0 {
@@ -52,23 +56,26 @@ func queryExternalAPI(s string) error {
 		failedJobs++
 		countLock.Unlock()
 		fmt.Printf("[queryExternalAPI][reqError] %s\n", err.Error())
+		errorLog("queryExternalAPI", "reqError: "+err.Error())
 		return err
 	}
 	param := req.URL.Query()
 	param.Add("key", s)
 	req.URL.RawQuery = param.Encode()
 	cli := &http.Client{}
-	resp, respErr := cli.Do(req)
-	if respErr != nil || resp.StatusCode != 200 {
+	resp, cliErr := cli.Do(req)
+	if cliErr != nil || resp.StatusCode != 200 {
 		countLock.Lock()
 		failedJobs++
 		remainingJobs--
 		countLock.Unlock()
-		if respErr != nil {
-			fmt.Printf("[queryExternalAPI][respError] %s\n", respErr.Error())
-			return respErr
+		if cliErr != nil {
+			fmt.Printf("[queryExternalAPI][cliError] %s\n", cliErr.Error())
+			errorLog("queryExternalAPI", "cliError: "+cliErr.Error())
+			return cliErr
 		}
 		fmt.Printf("[queryExternalAPI][%d] %s\n", resp.StatusCode, err.Error())
+		errorLog("respErr", strconv.Itoa(resp.StatusCode))
 		return errors.New(string(resp.StatusCode))
 	}
 	countLock.Lock()
@@ -96,6 +103,7 @@ func connHandler(c net.Conn) {
 			break
 		} else if err != nil {
 			log.Printf("[connHandler] %s\n", err.Error())
+			errorLog("connHandler", err.Error())
 		}
 		countLock.Lock()
 		remainingJobs++
@@ -110,6 +118,7 @@ func TCPSrv() error {
 	if err != nil {
 		fmt.Printf("tcp server create failed!\n")
 		fmt.Printf("Err: %s\n", err.Error())
+		errorLog("TCPSrv", "TCP Server Start Error: "+err.Error())
 		return err
 	}
 	fmt.Printf("server start\n")

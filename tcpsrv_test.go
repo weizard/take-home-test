@@ -65,7 +65,7 @@ func TestRPSQueryExternalAPI(t *testing.T) {
 	wg.Wait()
 	rate := float64(reqs) / time.Since(startTime).Seconds()
 
-	if math.Floor(rate) > 30 {
+	if math.Floor(rate) > float64(RequestRate) {
 		t.Errorf("rate exceeded rate limit. reqs: %d, rate: %f", reqs, rate)
 	} else {
 		t.Logf("reqs: %d, rate: %f", reqs, rate)
