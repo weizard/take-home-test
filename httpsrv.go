@@ -18,16 +18,14 @@ type CurrentState struct {
 }
 
 func getState(w http.ResponseWriter, r *http.Request) {
-	countLock.RLock()
 	state := &CurrentState{
-		CurrentConn:   currentRequest,
+		CurrentConn:   GetCurrentRequest(),
 		RPS:           queryRateWatcher.getRate(),
-		ProcessedReq:  processedCount,
-		ProcessedJobs: processedJobs,
-		RemainingJobs: remainingJobs,
-		FailedJobs:    failedJobs,
+		ProcessedReq:  GetProcessedCount(),
+		ProcessedJobs: GetProcessedJobs(),
+		RemainingJobs: GetRemainingJobs(),
+		FailedJobs:    GetFailedJobs(),
 	}
-	countLock.RUnlock()
 	b, _ := json.Marshal(state)
 	fmt.Fprintf(w, "%s", b)
 }

@@ -136,3 +136,48 @@ func TCPSrv() error {
 		go connHandler(conn)
 	}
 }
+
+// GetCurrentRequest get currentRequest
+func GetCurrentRequest() int {
+	r := 0
+	countLock.RLock()
+	r = currentRequest
+	countLock.RUnlock()
+	return r
+}
+
+// GetProcessedCount get processedCount
+func GetProcessedCount() int {
+	r := 0
+	countLock.RLock()
+	r = processedCount
+	countLock.RUnlock()
+	return r
+}
+
+// GetProcessedJobs get processedJobs
+func GetProcessedJobs() int {
+	r := 0
+	countLock.RLock()
+	r = processedJobs
+	countLock.RUnlock()
+	return r
+}
+
+// GetRemainingJobs get remainingJobs
+func GetRemainingJobs() int {
+	r := 0
+	countLock.RLock()
+	r = remainingJobs
+	countLock.RUnlock()
+	return r
+}
+
+// GetFailedJobs get failedJobs
+func GetFailedJobs() int {
+	r := 0
+	countLock.RLock()
+	r = failedJobs
+	countLock.RUnlock()
+	return r
+}
