@@ -9,19 +9,23 @@ import (
 
 // CurrentState server's current state
 type CurrentState struct {
-	CurrentConn  int
-	RPS          float64
-	ProcessedReq int
+	CurrentConn   int
+	RPS           float64
+	ProcessedReq  int
+	ProcessedJobs int
+	RemainingJobs int
+	FailedJobs    int
 }
 
 func getState(w http.ResponseWriter, r *http.Request) {
-	// rps := queryRateWatcher.getRate()
 	countLock.RLock()
 	state := &CurrentState{
-		CurrentConn: currentRequest,
-		// RPS:          rps,
-		RPS:          queryRateWatcher.getRate(),
-		ProcessedReq: processedCount,
+		CurrentConn:   currentRequest,
+		RPS:           queryRateWatcher.getRate(),
+		ProcessedReq:  processedCount,
+		ProcessedJobs: processedJobs,
+		RemainingJobs: remainingJobs,
+		FailedJobs:    failedJobs,
 	}
 	countLock.RUnlock()
 	b, _ := json.Marshal(state)

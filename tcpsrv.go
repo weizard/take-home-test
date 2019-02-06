@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,6 +21,9 @@ var (
 	countLock      sync.RWMutex
 	currentRequest int
 	processedCount int
+	processedJobs  int
+	remainingJobs  int
+	failedJobs     int
 )
 
 func init() {
@@ -44,6 +48,9 @@ func queryExternalAPI(s string) error {
 	queryRateWatcher.ticRate(1)
 	req, err := http.NewRequest(http.MethodGet, apiEndPoint, nil)
 	if err != nil {
+		countLock.Lock()
+		failedJobs++
+		countLock.Unlock()
 		fmt.Printf("[queryExternalAPI][reqError] %s\n", err.Error())
 		return err
 	}
@@ -52,12 +59,22 @@ func queryExternalAPI(s string) error {
 	req.URL.RawQuery = param.Encode()
 	cli := &http.Client{}
 	resp, respErr := cli.Do(req)
-	if respErr != nil {
-		fmt.Printf("[queryExternalAPI][respError] %s\n", err.Error())
-		return respErr
-	} else if resp.StatusCode != 200 {
+	if respErr != nil || resp.StatusCode != 200 {
+		countLock.Lock()
+		failedJobs++
+		remainingJobs--
+		countLock.Unlock()
+		if respErr != nil {
+			fmt.Printf("[queryExternalAPI][respError] %s\n", respErr.Error())
+			return respErr
+		}
 		fmt.Printf("[queryExternalAPI][%d] %s\n", resp.StatusCode, err.Error())
+		return errors.New(string(resp.StatusCode))
 	}
+	countLock.Lock()
+	remainingJobs--
+	processedJobs++
+	countLock.Unlock()
 	return nil
 }
 
@@ -68,7 +85,8 @@ func connHandler(c net.Conn) {
 	for {
 		c.SetDeadline(time.Now().Add(RequestTimeout))
 		stringData, err := bufReader.ReadString('\n')
-		if neterr, ok := err.(net.Error); (ok && neterr.Timeout()) || err == io.EOF {
+		stringData = strings.Trim(stringData, "\n")
+		if neterr, ok := err.(net.Error); (ok && neterr.Timeout()) || err == io.EOF || stringData == "quit" {
 			fmt.Printf("close conn\n")
 			countLock.Lock()
 			currentRequest--
@@ -79,18 +97,10 @@ func connHandler(c net.Conn) {
 		} else if err != nil {
 			log.Printf("[connHandler] %s\n", err.Error())
 		}
-		stringData = strings.Trim(stringData, "\n")
-		// log.Printf("%s\n", stringData)
+		countLock.Lock()
+		remainingJobs++
+		countLock.Unlock()
 		go queryExternalAPI(stringData)
-		if string(stringData) == "quit" {
-			fmt.Printf("close conn\n")
-			countLock.Lock()
-			currentRequest--
-			processedCount++
-			countLock.Unlock()
-			c.Close()
-			break
-		}
 	}
 }
 
