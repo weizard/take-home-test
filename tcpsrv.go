@@ -95,11 +95,11 @@ func connHandler(c net.Conn) {
 		stringData = strings.Trim(stringData, "\n")
 		if neterr, ok := err.(net.Error); (ok && neterr.Timeout()) || err == io.EOF || stringData == "quit" {
 			fmt.Printf("close conn\n")
+			c.Close()
 			countLock.Lock()
 			currentRequest--
 			processedCount++
 			countLock.Unlock()
-			c.Close()
 			break
 		} else if err != nil {
 			log.Printf("[connHandler] %s\n", err.Error())
