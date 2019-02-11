@@ -45,7 +45,7 @@ func client(wg *sync.WaitGroup) {
 			fmt.Println(err)
 			break
 		}
-		sleepTime += rand.Intn(1500)
+		sleepTime += 1500
 	}
 	wg.Done()
 }

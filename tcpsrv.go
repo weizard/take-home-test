@@ -93,7 +93,9 @@ func connHandler(c net.Conn) {
 		c.SetDeadline(time.Now().Add(RequestTimeout))
 		stringData, err := bufReader.ReadString('\n')
 		stringData = strings.Trim(stringData, "\n")
+		fmt.Println(time.Now(), " ", stringData)
 		if neterr, ok := err.(net.Error); (ok && neterr.Timeout()) || err == io.EOF || stringData == "quit" {
+			fmt.Printf("%v ", time.Now())
 			fmt.Printf("close conn\n")
 			c.Close()
 			countLock.Lock()

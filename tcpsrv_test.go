@@ -1,12 +1,12 @@
 package main
 
 import (
+	"io"
 	"math"
 	"math/rand"
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -84,21 +84,13 @@ func TestQueryExternalAPITimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cli create failed. err: %s\n", err.Error())
 	}
-	_, err = cli.Write([]byte("12232\n"))
-	if err != nil {
+	if _, err := cli.Write([]byte("12232\n")); err != nil {
 		t.Error(err)
 	}
 	time.Sleep(11000 * time.Millisecond)
-	_, err = cli.Write([]byte("1222222232\n"))
-	if err != nil {
-		t.Error(err)
-	}
-	time.Sleep(2000 * time.Millisecond)
-	_, err = cli.Write([]byte("1222222232\n"))
-	if err == nil {
-		t.Error("timeout not happened.")
-	} else if !strings.Contains(err.Error(), "write: broken pipe") {
-		t.Errorf("err: %s\n", err.Error())
+	buf := make([]byte, 1)
+	if _, err := cli.Read(buf); err != io.EOF {
+		t.Fatal(err)
 	}
 	cli.Close()
 }
@@ -119,16 +111,9 @@ func TestQueryExternalAPIQuit(t *testing.T) {
 		t.Error(err)
 	}
 	time.Sleep(1000 * time.Millisecond)
-	_, err = cli.Write([]byte("1222222232\n"))
-	if err != nil {
-		t.Error(err)
-	}
-	time.Sleep(2000 * time.Millisecond)
-	_, err = cli.Write([]byte("1222222232\n"))
-	if err == nil {
-		t.Error("timeout not happened.")
-	} else if !strings.Contains(err.Error(), "write: broken pipe") {
-		t.Errorf("err: %s\n", err.Error())
+	buf := make([]byte, 1)
+	if _, err := cli.Read(buf); err != io.EOF {
+		t.Fatal(err)
 	}
 	cli.Close()
 }
