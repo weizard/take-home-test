@@ -141,45 +141,35 @@ func TCPSrv() error {
 
 // GetCurrentRequest get currentRequest
 func GetCurrentRequest() int {
-	r := 0
 	countLock.RLock()
-	r = currentRequest
-	countLock.RUnlock()
-	return r
+	defer countLock.RUnlock()
+	return currentRequest
 }
 
 // GetProcessedCount get processedCount
 func GetProcessedCount() int {
-	r := 0
 	countLock.RLock()
-	r = processedCount
-	countLock.RUnlock()
-	return r
+	defer countLock.RUnlock()
+	return processedCount
 }
 
 // GetProcessedJobs get processedJobs
 func GetProcessedJobs() int {
-	r := 0
 	countLock.RLock()
-	r = processedJobs
-	countLock.RUnlock()
-	return r
+	defer countLock.RUnlock()
+	return processedJobs
 }
 
 // GetRemainingJobs get remainingJobs
 func GetRemainingJobs() int {
-	r := 0
 	countLock.RLock()
-	r = remainingJobs
-	countLock.RUnlock()
-	return r
+	defer countLock.RUnlock()
+	return remainingJobs
 }
 
 // GetFailedJobs get failedJobs
 func GetFailedJobs() int {
-	r := 0
 	countLock.RLock()
-	r = failedJobs
-	countLock.RUnlock()
-	return r
+	defer countLock.RUnlock()
+	return failedJobs
 }
